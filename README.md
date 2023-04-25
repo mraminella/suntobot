@@ -16,7 +16,7 @@ COMPLETION_SIZE=600 # The completion size of the resume, the larger it gets, the
 
 ## Project Structure
 
-The project consists of the main `app.py` and two simple modules in `modules/`:
+The project consists of the main `app.py` and two simple modules in `project/`:
 
 * `chatbot.py`
 * `openai_utils.py`

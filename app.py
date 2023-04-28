@@ -16,15 +16,14 @@ if __name__ == '__main__':
     application = ApplicationBuilder().token(os.environ['TELEGRAM_BOT_KEY']).build()
     
     message_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), chatbot.log)
-    start_handler = CommandHandler('start', chatbot.start)
-    getAllMessages_handler = CommandHandler('getAllMessages', chatbot.getAllMessages)
-    resetMessages_handler = CommandHandler('reset', chatbot.resetMessages)
-    resumeMessages_handler = CommandHandler('resume', chatbot.resumeMessages)
+    start_handler = CommandHandler('start', chatbot.start_handler)
+    resetMessages_handler = CommandHandler('reset', chatbot.resetMessages_handler)
+    resumeMessages_handler = CommandHandler('resume', chatbot.resumeMessages_handler)
     
     application.add_handler(start_handler)
     application.add_handler(message_handler)
-    application.add_handler(getAllMessages_handler)
     application.add_handler(resetMessages_handler)
     application.add_handler(resumeMessages_handler)
 
+    chatbot.periodic_chat_check()
     application.run_polling()

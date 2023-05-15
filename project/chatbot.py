@@ -29,6 +29,7 @@ class Chatbot:
         self.message_buf[chat_id]['messages'] = []
         self.message_buf[chat_id]['cur_size'] = 0
         self.message_buf[chat_id]['context'] = context
+        self.message_buf[chat_id].pop('resume')
 
     def init_buf(self,chat_id,context):
         self.message_buf[chat_id] = {'messages' : [], 'cur_size' : 0, 'context' : context}

@@ -1,4 +1,4 @@
-import logging, os
+import logging, os, asyncio
 from telegram.ext import filters, ApplicationBuilder, CommandHandler, MessageHandler
 from project.chatbot import Chatbot
 
@@ -6,6 +6,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+
 
 
 if __name__ == '__main__':
@@ -25,5 +26,7 @@ if __name__ == '__main__':
     application.add_handler(resetMessages_handler)
     application.add_handler(resumeMessages_handler)
 
-    chatbot.periodic_chat_check()
-    application.run_polling()
+    loop = asyncio.get_event_loop()
+
+    loop.create_task(chatbot.chat_check())
+    loop.run_until_complete(asyncio.gather(application.run_polling()),chatbot.chat_check())

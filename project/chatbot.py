@@ -4,7 +4,8 @@ from telegram.ext import filters, ApplicationBuilder, ContextTypes, CommandHandl
 from project.openai_utils import get_new_resume, get_incremental_resume, estimate_tokens
 
 MAX_TOKEN_SIZE = int(os.environ['MAX_TOKEN_SIZE'])
-CHAT_CHECK_INTERVAL=1 # Check every hour if chat had updates
+CHAT_CHECK_INTERVAL=60 # Check every hour if chat had updates
+MINUTE_DURATION_SECONDS=60
 
 class Timer:
     def __init__(self, timeout, callback):
@@ -64,20 +65,18 @@ class Chatbot:
             self.do_resume(chat_id)
         
     async def chat_check(self):
+        await asyncio.sleep(MINUTE_DURATION_SECONDS*CHAT_CHECK_INTERVAL)
         now = datetime.datetime.now(datetime.timezone.utc)
         for chat_id in self.message_buf:
             context = self.message_buf[chat_id]['context']
-            last_message_date = self.message_buf[chat_id]['messages'][-1]['date']
-            elapsed_seconds = (now - last_message_date).total_seconds()
-            if(elapsed_seconds / 60 > CHAT_CHECK_INTERVAL):
-                context.bot.send_message(chat_id, text="È passato un pò dall'ultimo messaggio! Sto per fare il riassunto")
-                await self.resumeMessages(chat_id)
-        self.periodic_chat_check()
-
-    async def periodic_chat_check(self):
-       Timer(5*CHAT_CHECK_INTERVAL,self.chat_check()) 
-       await asyncio.sleep(5*CHAT_CHECK_INTERVAL)
-       #threading.Timer(5*CHAT_CHECK_INTERVAL,function=self.chat_check).start()
+            buf_len = len(self.message_buf[chat_id]['messages'])
+            if(buf_len > 1):
+                last_message_date = self.message_buf[chat_id]['messages'][-1]['date']
+                elapsed_seconds = (now - last_message_date).total_seconds()
+                if(elapsed_seconds / 60 > CHAT_CHECK_INTERVAL):
+                    await context.bot.send_message(chat_id, text="È passato un pò dall'ultimo messaggio! Sto per fare il riassunto")
+                    await self.resumeMessages(chat_id)
+        await self.chat_check()
 
     def get_chat_id(self,update: Update):
         return update.effective_chat.id

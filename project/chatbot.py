@@ -48,22 +48,23 @@ class Chatbot:
 
 
     async def log(self,update: Update, context: ContextTypes.DEFAULT_TYPE):
-        chat_id = update.effective_chat.id
-        text = update.message.text
-        username = update.message.from_user.full_name
-        date = update.message.date
-        #await context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
-        if(chat_id not in self.message_buf):
-            self.init_buf(chat_id,context)
-        message_data = { 'username' : username, 'text' : text, 'date' : date }
-        self.message_buf[chat_id]['messages'].append(message_data)
-        cur_size = self.message_buf[chat_id]['cur_size'] + estimate_tokens(json.dumps(message_data['username'])) + estimate_tokens(json.dumps(message_data['text']))
-        self.message_buf[chat_id]['cur_size'] = cur_size
-        self.message_buf[chat_id]['context'] = context
-        logging.info(f"id: {chat_id}, message: {text}, cur_size: {cur_size}")
-        # Resume interno automatico
-        if(cur_size > self.max_token_size):
-            self.do_resume(chat_id)
+        if(update.message is not None):
+            chat_id = update.effective_chat.id
+            text = update.message.text
+            username = update.message.from_user.full_name
+            date = update.message.date
+            #await context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
+            if(chat_id not in self.message_buf):
+                self.init_buf(chat_id,context)
+            message_data = { 'username' : username, 'text' : text, 'date' : date }
+            self.message_buf[chat_id]['messages'].append(message_data)
+            cur_size = self.message_buf[chat_id]['cur_size'] + estimate_tokens(json.dumps(message_data['username'])) + estimate_tokens(json.dumps(message_data['text']))
+            self.message_buf[chat_id]['cur_size'] = cur_size
+            self.message_buf[chat_id]['context'] = context
+            logging.info(f"id: {chat_id}, message: {text}, cur_size: {cur_size}")
+            # Resume interno automatico
+            if(cur_size > self.max_token_size):
+                self.do_resume(chat_id)
         
     async def chat_check(self):
         await asyncio.sleep(MINUTE_DURATION_SECONDS*CHAT_CHECK_INTERVAL)

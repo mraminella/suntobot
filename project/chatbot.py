@@ -66,8 +66,12 @@ class Chatbot:
             if(cur_size > self.max_token_size):
                 self.do_resume(chat_id)
         
-    async def chat_check(self):
+    async def chat_check_loop(self):
         await asyncio.sleep(MINUTE_DURATION_SECONDS*CHAT_CHECK_INTERVAL)
+        await self.chat_check()
+        await self.chat_check_loop()
+
+    async def chat_check(self):
         now = datetime.datetime.now(datetime.timezone.utc)
         for chat_id in self.message_buf:
             context = self.message_buf[chat_id]['context']
@@ -78,7 +82,6 @@ class Chatbot:
                 if(elapsed_seconds / 60 > CHAT_CHECK_INTERVAL):
                     await context.bot.send_message(chat_id, text="È passato un pò dall'ultimo messaggio! Sto per fare il riassunto")
                     await self.resumeMessages(chat_id)
-        await self.chat_check()
 
     def get_chat_id(self,update: Update):
         return update.effective_chat.id

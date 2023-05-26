@@ -28,5 +28,5 @@ if __name__ == '__main__':
 
     loop = asyncio.get_event_loop()
 
-    loop.create_task(chatbot.chat_check())
-    loop.run_until_complete(asyncio.gather(application.run_polling()),chatbot.chat_check())
+    loop.create_task(chatbot.chat_check_loop())
+    loop.run_until_complete(asyncio.gather(application.run_polling()),chatbot.chat_check_loop())

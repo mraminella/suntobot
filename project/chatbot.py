@@ -48,7 +48,7 @@ class Chatbot:
 
 
     async def log(self,update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if(update.message is not None):
+        if(update.message):
             chat_id = update.effective_chat.id
             text = update.message.text
             username = update.message.from_user.full_name

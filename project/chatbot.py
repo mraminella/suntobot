@@ -6,6 +6,7 @@ from project.openai_utils import get_new_resume, get_incremental_resume, estimat
 MAX_TOKEN_SIZE = int(os.environ['MAX_TOKEN_SIZE'])
 CHAT_CHECK_INTERVAL=60 # Check every hour if chat had updates
 MINUTE_DURATION_SECONDS=60
+MIN_MESSAGES_BEFORE_AUTO_RESUME=10
 
 class Timer:
     def __init__(self, timeout, callback):
@@ -76,7 +77,7 @@ class Chatbot:
         for chat_id in self.message_buf:
             context = self.message_buf[chat_id]['context']
             buf_len = len(self.message_buf[chat_id]['messages'])
-            if(buf_len > 1):
+            if(buf_len > MIN_MESSAGES_BEFORE_AUTO_RESUME):
                 last_message_date = self.message_buf[chat_id]['messages'][-1]['date']
                 elapsed_seconds = (now - last_message_date).total_seconds()
                 if(elapsed_seconds / 60 > CHAT_CHECK_INTERVAL):

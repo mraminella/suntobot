@@ -127,9 +127,9 @@ class Chatbot:
 \nServo a creare un riassunto abbastanza confuso dei messaggi nei gruppi, grazie a GPT.\
 \n Istruzioni:\n Inseriscimi in una chat di gruppo. \n \
 Usa il comando /resume per avere il riassunto\n \
-Usa il comando /reset per resettare il log della conversazione.\n\
+Usa il comando /reset per resettare il log della conversazione.\n \
 Il reset dello storico è automatico a ogni riassunto. \n \
-Ogni {CHAT_CHECK_INTERVAL} minuti se ci sono almeno {MIN_MESSAGES_BEFORE_AUTO_RESUME} parte un riassunto automatico. \n \
+Ogni {CHAT_CHECK_INTERVAL} minuti se ci sono almeno {MIN_MESSAGES_BEFORE_AUTO_RESUME} messaggi parte un riassunto automatico. \n \
 Se preferisci disattivarlo, usa il comando /toggleSelfResume.\n \
 PRIVACY NOTICE: Il bot gira su un muletto del creatore e al momento i messaggi sono conservati in RAM, non vengono salvati \
 o usati per altri fini. Il progetto è open source e lo trovi su https://github.com/mraminella/suntobot .\n \

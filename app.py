@@ -4,7 +4,7 @@ from project.chatbot import Chatbot
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.WARN
 )
 
 

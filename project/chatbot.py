@@ -8,19 +8,6 @@ CHAT_CHECK_INTERVAL=60 # Check every hour if chat had updates
 MINUTE_DURATION_SECONDS=60
 MIN_MESSAGES_BEFORE_AUTO_RESUME=20
 
-class Timer:
-    def __init__(self, timeout, callback):
-        self._timeout = timeout
-        self._callback = callback
-        self._task = asyncio.ensure_future(self._job())
-
-    async def _job(self):
-        await asyncio.sleep(self._timeout)
-        await self._callback()
-
-    def cancel(self):
-        self._task.cancel()
-
 class Chatbot:
     def __init__(self,message_buf) -> None:
         self.message_buf = message_buf
@@ -44,7 +31,7 @@ class Chatbot:
             result = get_incremental_resume(self.message_buf[chat_id]['resume'],self.message_buf[chat_id]['messages'])
         if('resume' in self.message_buf[chat_id] and self.message_buf[chat_id]['cur_size'] == 0):
             result = self.message_buf[chat_id]['resume']
-        self.message_buf[chat_id] = {'messages' : [], 'cur_size' : 0, 'resume' : result}
+        self.message_buf[chat_id] = {'messages' : [], 'cur_size' : 0, 'resume' : result, 'selfResumeEnabled' : self.message_buf[chat_id]['selfResumeEnabled']}
         return result
 
 

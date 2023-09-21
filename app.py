@@ -20,7 +20,7 @@ if __name__ == '__main__':
     help_handler = CommandHandler('help', chatbot.help_handler)
     resetMessages_handler = CommandHandler('reset', chatbot.resetMessages_handler)
     resumeMessages_handler = CommandHandler('resume', chatbot.resumeMessages_handler)
-    toggleSelfResume_handler = CommandHandler('toggleSelfResume', chatbot.toggleSelfResume_handler)
+    toggleSelfResume_handler = CommandHandler('selfResume', chatbot.toggleSelfResume_handler)
     
     application.add_handler(help_handler)
     application.add_handler(message_handler)

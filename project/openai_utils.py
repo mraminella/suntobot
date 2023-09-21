@@ -21,7 +21,7 @@ def run_prompt_thread(prompt,max_tokens):
     return result
 
 def get_new_resume(messages):
-    prompt_context=f"Puoi farmi un riassunto dei seguenti messaggi di chat? Cerca di essere il più possibile sintetico. Sono rappresentati come\nutente: messaggio\n"
+    prompt_context=f"Puoi farmi un riassunto dei seguenti messaggi di chat, senza inventare fatti? I messaggi sono rappresentati come\nutente: messaggio\n"
     for message in messages:
         prompt_context = prompt_context + f"{message['username']}: {message['text']}\n"
     prompt_context=prompt_context+"Riassunto:\n"
@@ -30,7 +30,7 @@ def get_new_resume(messages):
 
 
 def get_incremental_resume(cur_resume,messages):
-    prompt_context=f"Dato il seguente riassunto: \nRiassunto: {cur_resume}\nPuoi farmi un nuovo riassunto che include anche i seguenti messaggi di chat? Cerca di essere il più possibile sintetico. Sono rappresentati come\nutente: messaggio\n"
+    prompt_context=f"Dato il seguente riassunto: \nRiassunto: {cur_resume}\nPuoi farmi un nuovo riassunto, senza inventare fatti, che include anche i seguenti messaggi di chat? I messaggi sono rappresentati come\nutente: messaggio\n"
     for message in messages:
         prompt_context = prompt_context + f"{message['username']}: {message['text']}\n"
     prompt_context=prompt_context+"Riassunto:\n"

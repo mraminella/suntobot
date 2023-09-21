@@ -6,20 +6,7 @@ from project.openai_utils import get_new_resume, get_incremental_resume, estimat
 MAX_TOKEN_SIZE = int(os.environ['MAX_TOKEN_SIZE'])
 CHAT_CHECK_INTERVAL=60 # Check every hour if chat had updates
 MINUTE_DURATION_SECONDS=60
-MIN_MESSAGES_BEFORE_AUTO_RESUME=10
-
-class Timer:
-    def __init__(self, timeout, callback):
-        self._timeout = timeout
-        self._callback = callback
-        self._task = asyncio.ensure_future(self._job())
-
-    async def _job(self):
-        await asyncio.sleep(self._timeout)
-        await self._callback()
-
-    def cancel(self):
-        self._task.cancel()
+MIN_MESSAGES_BEFORE_AUTO_RESUME=20
 
 class Chatbot:
     def __init__(self,message_buf) -> None:
@@ -33,7 +20,7 @@ class Chatbot:
         self.message_buf[chat_id].pop('resume')
 
     def init_buf(self,chat_id,context):
-        self.message_buf[chat_id] = {'messages' : [], 'cur_size' : 0, 'context' : context}
+        self.message_buf[chat_id] = {'messages' : [], 'cur_size' : 0, 'context' : context, 'selfResumeEnabled' : True }
 
     def do_resume(self,chat_id):
         if('resume' not in self.message_buf[chat_id] and self.message_buf[chat_id]['cur_size'] == 0):
@@ -44,7 +31,7 @@ class Chatbot:
             result = get_incremental_resume(self.message_buf[chat_id]['resume'],self.message_buf[chat_id]['messages'])
         if('resume' in self.message_buf[chat_id] and self.message_buf[chat_id]['cur_size'] == 0):
             result = self.message_buf[chat_id]['resume']
-        self.message_buf[chat_id] = {'messages' : [], 'cur_size' : 0, 'resume' : result}
+        self.message_buf[chat_id] = {'messages' : [], 'cur_size' : 0, 'resume' : result, 'selfResumeEnabled' : self.message_buf[chat_id]['selfResumeEnabled']}
         return result
 
 
@@ -75,17 +62,28 @@ class Chatbot:
     async def chat_check(self):
         now = datetime.datetime.now(datetime.timezone.utc)
         for chat_id in self.message_buf:
-            context = self.message_buf[chat_id]['context']
-            buf_len = len(self.message_buf[chat_id]['messages'])
-            if(buf_len > MIN_MESSAGES_BEFORE_AUTO_RESUME):
-                last_message_date = self.message_buf[chat_id]['messages'][-1]['date']
-                elapsed_seconds = (now - last_message_date).total_seconds()
-                if(elapsed_seconds / 60 > CHAT_CHECK_INTERVAL):
-                    await context.bot.send_message(chat_id, text="È passato un pò dall'ultimo messaggio! Sto per fare il riassunto")
-                    await self.resumeMessages(chat_id)
+            if self.message_buf[chat_id]['selfResumeEnabled']:
+                context = self.message_buf[chat_id]['context']
+                buf_len = len(self.message_buf[chat_id]['messages'])
+                if(buf_len > MIN_MESSAGES_BEFORE_AUTO_RESUME):
+                    last_message_date = self.message_buf[chat_id]['messages'][-1]['date']
+                    elapsed_seconds = (now - last_message_date).total_seconds()
+                    if(elapsed_seconds / 60 > CHAT_CHECK_INTERVAL):
+                        await context.bot.send_message(chat_id, text="È passato un pò dall'ultimo messaggio! Sto per fare il riassunto")
+                        await self.resumeMessages(chat_id)
 
     def get_chat_id(self,update: Update):
         return update.effective_chat.id
+    
+    async def toggleSelfResume_handler(self, update: Update, context : ContextTypes.DEFAULT_TYPE):
+        chat_id = self.get_chat_id(update)
+        if self.message_buf[chat_id]['selfResumeEnabled']:
+            self.message_buf[chat_id]['selfResumeEnabled'] = False
+            await context.bot.send_message(chat_id, text="Riassunti automatici disattivati!")
+        else:
+            self.message_buf[chat_id]['selfResumeEnabled'] = True
+            await context.bot.send_message(chat_id, text="Riassunti automatici attivati!")
+
         
     async def resetMessages(self,chat_id,context):
         self.reset_buf(chat_id,context)
@@ -107,9 +105,19 @@ class Chatbot:
     async def resumeMessages_handler(self,update: Update, context : ContextTypes.DEFAULT_TYPE):
         chat_id = self.get_chat_id(update)
         if(chat_id not in self.message_buf):
-            await  context.bot.send_message(chat_id, text=f"Sei serio?")
+            await  context.bot.send_message(chat_id, text=f"C'è solo un messaggio, non farò il riassunto!")
         await self.resumeMessages(chat_id)
 
-    async def start_handler(self,update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def help_handler(self,update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id = self.get_chat_id(update)
-        await context.bot.send_message(chat_id, text=f"Ciao, sono SuntoBot di Rami!\nServo a creare un riassunto dei messaggi che ho ricevuto usando GPT.\n Istruzioni:\n Usa il comando /resume per avere il riassunto\n Usa il comando /reset per resettare il log della conversazione.\nIl reset dello storico è automatico a ogni riassunto.")
+        await context.bot.send_message(chat_id, text=f"Ciao, sono RimbamBot di Rami!\
+\nServo a creare un riassunto abbastanza confuso dei messaggi nei gruppi, grazie a GPT.\
+\n Istruzioni:\n Inseriscimi in una chat di gruppo. \n \
+Usa il comando /resume per avere il riassunto\n \
+Usa il comando /reset per resettare il log della conversazione.\n \
+Il reset dello storico è automatico a ogni riassunto. \n \
+Ogni {CHAT_CHECK_INTERVAL} minuti se ci sono almeno {MIN_MESSAGES_BEFORE_AUTO_RESUME} messaggi parte un riassunto automatico. \n \
+Se preferisci disattivarlo, usa il comando /toggleSelfResume.\n \
+PRIVACY NOTICE: Il bot gira su un muletto del creatore e al momento i messaggi sono conservati in RAM, non vengono salvati \
+o usati per altri fini. Il progetto è open source e lo trovi su https://github.com/mraminella/suntobot .\n \
+Buon rimbambimento!")

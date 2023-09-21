@@ -2,16 +2,22 @@ import logging, json, os, datetime, asyncio
 from telegram import Update
 from telegram.ext import filters, ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler
 from project.openai_utils import get_new_resume, get_incremental_resume, estimate_tokens
+from project.files_util import read_dictionary, save_dictionary
 
 MAX_TOKEN_SIZE = int(os.environ['MAX_TOKEN_SIZE'])
 CHAT_CHECK_INTERVAL=60 # Check every hour if chat had updates
 MINUTE_DURATION_SECONDS=60
 MIN_MESSAGES_BEFORE_AUTO_RESUME=20
+CONFIG_DICTIONARY_FILENAME="chats_config.json"
+DEFAULT_CHAT_CONFIG = { 'selfResumeEnabled' : True }
 
 class Chatbot:
+    
     def __init__(self,message_buf) -> None:
         self.message_buf = message_buf
         self.max_token_size = MAX_TOKEN_SIZE
+        self.chat_config = read_dictionary(CONFIG_DICTIONARY_FILENAME)
+
 
     def reset_buf(self,chat_id, context):
         self.message_buf[chat_id]['messages'] = []
@@ -20,7 +26,7 @@ class Chatbot:
         self.message_buf[chat_id].pop('resume')
 
     def init_buf(self,chat_id,context):
-        self.message_buf[chat_id] = {'messages' : [], 'cur_size' : 0, 'context' : context, 'selfResumeEnabled' : True }
+        self.message_buf[chat_id] = {'messages' : [], 'cur_size' : 0, 'context' : context }
 
     def do_resume(self,chat_id):
         if('resume' not in self.message_buf[chat_id] and self.message_buf[chat_id]['cur_size'] == 0):
@@ -44,6 +50,8 @@ class Chatbot:
             #await context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
             if(chat_id not in self.message_buf):
                 self.init_buf(chat_id,context)
+            if(chat_id not in self.chat_config):
+                self.chat_config[chat_id] = DEFAULT_CHAT_CONFIG
             message_data = { 'username' : username, 'text' : text, 'date' : date }
             self.message_buf[chat_id]['messages'].append(message_data)
             cur_size = self.message_buf[chat_id]['cur_size'] + estimate_tokens(json.dumps(message_data['username'])) + estimate_tokens(json.dumps(message_data['text']))
@@ -62,7 +70,7 @@ class Chatbot:
     async def chat_check(self):
         now = datetime.datetime.now(datetime.timezone.utc)
         for chat_id in self.message_buf:
-            if self.message_buf[chat_id]['selfResumeEnabled']:
+            if self.chat_config[chat_id]['selfResumeEnabled']:
                 context = self.message_buf[chat_id]['context']
                 buf_len = len(self.message_buf[chat_id]['messages'])
                 if(buf_len > MIN_MESSAGES_BEFORE_AUTO_RESUME):
@@ -76,13 +84,16 @@ class Chatbot:
         return update.effective_chat.id
     
     async def toggleSelfResume_handler(self, update: Update, context : ContextTypes.DEFAULT_TYPE):
+        
         chat_id = self.get_chat_id(update)
-        if self.message_buf[chat_id]['selfResumeEnabled']:
-            self.message_buf[chat_id]['selfResumeEnabled'] = False
+        if self.chat_config[chat_id]['selfResumeEnabled']:
+            self.chat_config[chat_id]['selfResumeEnabled'] = False
             await context.bot.send_message(chat_id, text="Riassunti automatici disattivati!")
+            save_dictionary(self.chat_config)
         else:
-            self.message_buf[chat_id]['selfResumeEnabled'] = True
+            self.chat_config[chat_id]['selfResumeEnabled'] = True
             await context.bot.send_message(chat_id, text="Riassunti automatici attivati!")
+            save_dictionary(self.chat_config)
 
         
     async def resetMessages(self,chat_id,context):

@@ -2,16 +2,13 @@ import logging, os, asyncio
 from telegram.ext import filters, ApplicationBuilder, CommandHandler, MessageHandler
 from project.chatbot import Chatbot
 
+
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.WARN
 )
 
-
-
 if __name__ == '__main__':
-    # manager = multiprocessing.Manager()
-    #message_buf = manager.dict()
     message_buf = {}
     chatbot = Chatbot(message_buf)
     application = ApplicationBuilder().token(os.environ['TELEGRAM_BOT_KEY']).build()

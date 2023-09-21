@@ -5,7 +5,7 @@ def save_dictionary(dict,dest_filename):
     with open(dest_filename,'w') as f:
         json.dump(dict,f,indent=4)
 
-def read_dictionary(source_filename):
+def read_dictionary_safe(source_filename):
     if os.path.isfile(source_filename):
         with open(source_filename, 'r') as f:
             return json.load(f)

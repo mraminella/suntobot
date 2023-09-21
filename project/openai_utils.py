@@ -3,7 +3,7 @@ COMPLETION_SIZE=int(os.environ['COMPLETION_SIZE'])
 
 def run_prompt(prompt,max_tokens):
     openai.api_key = os.environ['OPENAI_KEY']
-    response = openai.Completion.create(model="text-davinci-003", prompt=prompt, temperature=1, max_tokens=max_tokens,  top_p=0.1, frequency_penalty=0,presence_penalty=0)
+    response = openai.Completion.create(model="gpt-3.5-turbo-instruct", prompt=prompt, temperature=1, max_tokens=max_tokens,  top_p=0.1, frequency_penalty=0,presence_penalty=0)
     return response.choices[0].text
 
 def stop_thread(t):
@@ -20,8 +20,18 @@ def run_prompt_thread(prompt,max_tokens):
     result = t.get()
     return result
 
+
+def run_custom_prompt(messages,prompt_user,prompt_text):
+    prompt_context=f"Data la seguente chat in cui i messaggi sono rappresentati come\nutente: messaggio\n"
+    for message in messages:
+        prompt_context = prompt_context + f"{message['username']}: {message['text']}\n"
+    prompt_context=prompt_context+f"Se {prompt_user} chiede {prompt_text}, la risposta è:\n"
+    result = run_prompt(prompt_context,COMPLETION_SIZE)
+    return result
+
+
 def get_new_resume(messages):
-    prompt_context=f"Puoi farmi un riassunto dei seguenti messaggi di chat, senza inventare fatti? I messaggi sono rappresentati come\nutente: messaggio\n"
+    prompt_context=f"Puoi farmi un riassunto dei seguenti messaggi di chat? I messaggi sono rappresentati come\nutente: messaggio\n"
     for message in messages:
         prompt_context = prompt_context + f"{message['username']}: {message['text']}\n"
     prompt_context=prompt_context+"Riassunto:\n"
@@ -30,7 +40,7 @@ def get_new_resume(messages):
 
 
 def get_incremental_resume(cur_resume,messages):
-    prompt_context=f"Dato il seguente riassunto: \nRiassunto: {cur_resume}\nPuoi farmi un nuovo riassunto, senza inventare fatti, che include anche i seguenti messaggi di chat? I messaggi sono rappresentati come\nutente: messaggio\n"
+    prompt_context=f"Dato il seguente riassunto: \nRiassunto: {cur_resume}\nPuoi farmi un nuovo riassunto, che include anche i seguenti messaggi di chat? I messaggi sono rappresentati come\nutente: messaggio\n"
     for message in messages:
         prompt_context = prompt_context + f"{message['username']}: {message['text']}\n"
     prompt_context=prompt_context+"Riassunto:\n"
